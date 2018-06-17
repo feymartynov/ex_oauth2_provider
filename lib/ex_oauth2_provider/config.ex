@@ -31,29 +31,29 @@ defmodule ExOauth2Provider.Config do
 
   # Define default access token scopes for your provider
   @doc false
-  @spec default_scopes() :: [String.t]
+  @spec default_scopes() :: [String.t()]
   def default_scopes do
     Keyword.get(config(), :default_scopes, [])
   end
 
   # Define optional access token scopes for your provider
   @doc false
-  @spec optional_scopes() :: [String.t]
+  @spec optional_scopes() :: [String.t()]
   defp optional_scopes do
     Keyword.get(config(), :optional_scopes, [])
   end
 
   # Combined scopes list for your provider
   @doc false
-  @spec server_scopes() :: [String.t]
+  @spec server_scopes() :: [String.t()]
   def server_scopes do
     default_scopes() ++ optional_scopes()
   end
 
   @doc false
-  @spec native_redirect_uri() :: String.t
+  @spec native_redirect_uri() :: String.t()
   def native_redirect_uri do
-     Keyword.get(config(), :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
+    Keyword.get(config(), :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
   end
 
   @doc false
@@ -97,7 +97,7 @@ defmodule ExOauth2Provider.Config do
   @doc false
   @spec force_ssl_in_redirect_uri?() :: boolean
   def force_ssl_in_redirect_uri? do
-    Keyword.get(config(), :force_ssl_in_redirect_uri, Mix.env != :dev)
+    Keyword.get(config(), :force_ssl_in_redirect_uri, Mix.env() != :dev)
   end
 
   # Use a custom access token generator
@@ -114,33 +114,41 @@ defmodule ExOauth2Provider.Config do
   end
 
   @doc false
-  @spec grant_flows() :: [String.t]
+  @spec grant_flows() :: [String.t()]
   def grant_flows do
-    Keyword.get(config(), :grant_flows, ~w(authorization_code client_credentials))
+    Keyword.get(config(), :grant_flows, ~w(authorization_code implicit client_credentials))
   end
 
   @doc false
-  @spec calculate_authorization_response_types() :: [Map.t]
+  @spec calculate_authorization_response_types() :: [Map.t()]
   def calculate_authorization_response_types do
-    %{"authorization_code" => {:code, ExOauth2Provider.Authorization.Code}}
-    |> Enum.filter(fn({k, _}) -> Enum.member?(grant_flows(), k) end)
-    |> Enum.map(fn({_, v}) -> v end)
+    %{
+      "authorization_code" => {:code, ExOauth2Provider.Authorization.Code},
+      "implicit" => {:token, ExOauth2Provider.Authorization.Implicit}
+    }
+    |> Enum.filter(fn {k, _} -> Enum.member?(grant_flows(), k) end)
+    |> Enum.map(fn {_, v} -> v end)
   end
 
   @doc false
-  @spec calculate_token_grant_types() :: Keyword.t
+  @spec calculate_token_grant_types() :: Keyword.t()
   def calculate_token_grant_types do
-    [authorization_code: ExOauth2Provider.Token.AuthorizationCode,
-     client_credentials: ExOauth2Provider.Token.ClientCredentials,
-     password: ExOauth2Provider.Token.Password,
-     refresh_token: ExOauth2Provider.Token.RefreshToken]
-    |> Enum.filter(fn({k, _}) -> grant_type_can_be_used?(grant_flows(), to_string(k)) end)
+    [
+      authorization_code: ExOauth2Provider.Token.AuthorizationCode,
+      implicit: ExOauth2Provider.Token.Implicit,
+      client_credentials: ExOauth2Provider.Token.ClientCredentials,
+      password: ExOauth2Provider.Token.Password,
+      refresh_token: ExOauth2Provider.Token.RefreshToken
+    ]
+    |> Enum.filter(fn {k, _} -> grant_type_can_be_used?(grant_flows(), to_string(k)) end)
   end
 
   defp grant_type_can_be_used?(_, "refresh_token"),
     do: use_refresh_token?()
+
   defp grant_type_can_be_used?(_, "password"),
     do: not is_nil(password_auth())
+
   defp grant_type_can_be_used?(grant_flows, grant_type) do
     Enum.member?(grant_flows, grant_type)
   end

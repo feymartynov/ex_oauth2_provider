@@ -7,8 +7,9 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Validates if a url can be used as a redirect_uri
   """
-  @spec validate(String.t | nil) :: {:ok, String.t} | {:errror, String.t}
+  @spec validate(String.t() | nil) :: {:ok, String.t()} | {:errror, String.t()}
   def validate(nil), do: validate("")
+
   def validate(url) do
     case String.trim(url) do
       "" ->
@@ -39,11 +40,12 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if uri matches client uri
   """
-  @spec matches?(String.t, String.t) :: boolean
+  @spec matches?(String.t(), String.t()) :: boolean
   @spec matches?(%URI{}, %URI{}) :: boolean
   def matches?(uri, client_uri) when is_binary(uri) and is_binary(client_uri) do
     matches?(URI.parse(uri), URI.parse(client_uri))
   end
+
   def matches?(%URI{} = uri, %URI{} = client_uri) do
     uri = Map.merge(uri, %{query: nil})
 
@@ -53,7 +55,7 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if a url matches a client redirect_uri
   """
-  @spec valid_for_authorization?(String.t, String.t) :: boolean
+  @spec valid_for_authorization?(String.t(), String.t()) :: boolean
   def valid_for_authorization?(url, client_url) do
     case validate(url) do
       {:error, _} ->
@@ -69,20 +71,22 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if a url is native
   """
-  @spec native_redirect_uri?(String.t) :: boolean
+  @spec native_redirect_uri?(String.t()) :: boolean
   def native_redirect_uri?(url) do
-    ExOauth2Provider.Config.native_redirect_uri == url
+    ExOauth2Provider.Config.native_redirect_uri() == url
   end
 
   @doc """
   Adds query parameters to uri
   """
-  @spec uri_with_query(String.t | URI.t, String.t) :: URI.t
+  @spec uri_with_query(String.t() | URI.t(), String.t()) :: URI.t()
   def uri_with_query(uri, query) when is_binary(uri),
     do: uri_with_query(URI.parse(uri), query)
+
   def uri_with_query(%URI{} = uri, query) do
     uri
     |> Map.merge(%{query: add_query_params(uri.query, query)})
+    |> Map.put(:fragment, query[:access_token])
     |> to_string()
   end
 
@@ -90,6 +94,7 @@ defmodule ExOauth2Provider.RedirectURI do
     (query || "")
     |> URI.decode_query(attrs)
     |> remove_empty_values()
+    |> Map.delete(:access_token)
     |> URI.encode_query()
   end
 

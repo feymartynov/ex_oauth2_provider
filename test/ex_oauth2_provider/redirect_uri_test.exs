@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.RedirectURITest do
   import ExOauth2Provider.RedirectURI
 
   test "validate native url" do
-    uri = ExOauth2Provider.Config.native_redirect_uri
+    uri = ExOauth2Provider.Config.native_redirect_uri()
     assert validate(uri) == {:ok, uri}
   end
 
@@ -14,7 +14,8 @@ defmodule ExOauth2Provider.RedirectURITest do
   end
 
   test "validate rejects with fragment" do
-    assert validate("https://app.co/test#fragment") == {:error, "Redirect URI cannot contain fragments"}
+    assert validate("https://app.co/test#fragment") ==
+             {:error, "Redirect URI cannot contain fragments"}
   end
 
   test "validate rejects with missing scheme" do
@@ -69,7 +70,10 @@ defmodule ExOauth2Provider.RedirectURITest do
   end
 
   test "valid_for_authorization?#true with array" do
-    assert valid_for_authorization?("https://app.co/aaa", "https://example.com/bbb\nhttps://app.co/aaa")
+    assert valid_for_authorization?(
+             "https://app.co/aaa",
+             "https://example.com/bbb\nhttps://app.co/aaa"
+           )
   end
 
   test "valid_for_authorization?#false with invalid uri" do
@@ -78,7 +82,8 @@ defmodule ExOauth2Provider.RedirectURITest do
   end
 
   test "uri_with_query/2" do
-    assert uri_with_query("https://example.com/", %{parameter: "value"}) == "https://example.com/?parameter=value"
+    assert uri_with_query("https://example.com/", %{parameter: "value"}) ==
+             "https://example.com/?parameter=value"
   end
 
   test "uri_with_query/2 rejects nil values" do
@@ -89,5 +94,10 @@ defmodule ExOauth2Provider.RedirectURITest do
     uri = uri_with_query("https://example.com/?query1=value", %{parameter: "value"})
     assert Regex.match?(~r/query1=value/, uri)
     assert Regex.match?(~r/parameter=value/, uri)
+  end
+
+  test "uri_with_query/2 adds access token parameter as fragment" do
+    uri = uri_with_query("https://example.com/", %{state: "abc", access_token: "12345"})
+    assert uri == "https://example.com/?state=abc#12345"
   end
 end
