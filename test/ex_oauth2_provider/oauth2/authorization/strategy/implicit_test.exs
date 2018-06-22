@@ -223,7 +223,7 @@ defmodule ExOauth2Provider.Authorization.ImplicitTest do
 
     assert {:redirect, redirect_uri} = authorize(resource_owner, params)
     token = get_last_access_token().token
-    assert redirect_uri == "https://example.com/path?param=1&state=40612##{token}"
+    assert redirect_uri == "https://example.com/path#access_token=#{token}&param=1&state=40612"
   end
 
   test "#deny/2 error when no resource owner" do

@@ -86,7 +86,7 @@ defmodule ExOauth2Provider.RedirectURI do
   def uri_with_query(%URI{} = uri, query) do
     uri
     |> Map.merge(%{query: add_query_params(uri.query, query)})
-    |> Map.put(:fragment, query[:access_token])
+    |> put_query_to_fragment()
     |> to_string()
   end
 
@@ -94,8 +94,15 @@ defmodule ExOauth2Provider.RedirectURI do
     (query || "")
     |> URI.decode_query(attrs)
     |> remove_empty_values()
-    |> Map.delete(:access_token)
     |> URI.encode_query()
+  end
+
+  defp put_query_to_fragment(uri) do
+    if uri.query |> URI.decode_query() |> Map.has_key?("access_token") do
+      %{uri | query: nil, fragment: uri.query}
+    else
+      uri
+    end
   end
 
   defp invalid_ssl_uri?(uri) do
