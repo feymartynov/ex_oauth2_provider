@@ -24,13 +24,12 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   """
 
   require Logger
-  import Plug.Conn
 
   alias Plug.Conn
   alias ExOauth2Provider.{Plug, Scopes}
 
   @doc false
-  @spec init(Keyword.t) :: Map.t
+  @spec init(Keyword.t()) :: map()
   def init(opts) do
     opts = Enum.into(opts, %{})
     key = Map.get(opts, :key, :default)
@@ -47,7 +46,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   defp scopes_sets(_), do: nil
 
   @doc false
-  @spec call(Conn.t, Map.t) :: Map.t
+  @spec call(Conn.t(), map()) :: map()
   def call(conn, opts) do
     conn
     |> Plug.current_access_token(Map.get(opts, :key))
@@ -78,7 +77,9 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
 
   defp handle_error({:ok, conn, _}), do: conn
   defp handle_error({:error, %Conn{params: params} = conn, opts}) do
-    conn = conn |> assign(:ex_oauth2_provider_failure, :unauthorized) |> halt
+    conn = conn
+           |> Conn.assign(:ex_oauth2_provider_failure, :unauthorized)
+           |> Conn.halt()
     params = Map.merge(params, %{reason: :unauthorized})
     {mod, meth} = Map.get(opts, :handler)
 

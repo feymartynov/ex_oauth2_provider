@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Mixfile do
   use Mix.Project
 
-  @version "0.3.2"
+  @version "0.4.3"
 
   def project do
     [app: :ex_oauth2_provider,
@@ -19,7 +19,8 @@ defmodule ExOauth2Provider.Mixfile do
 
      # Docs
      name: "ExOauth2Provider",
-     docs: [source_ref: "v#{@version}", main: "ExOauth2Provider",
+     docs: [source_ref: "v#{@version}",
+            main: "ExOauth2Provider",
             canonical: "http://hexdocs.pm/ex_oauth2_provider",
             source_url: "https://github.com/danschultzer/ex_oauth2_provider",
             extras: ["README.md"]]
@@ -37,14 +38,14 @@ defmodule ExOauth2Provider.Mixfile do
   defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
-    [{:ecto, "~> 2.1 or ~> 2.2"},
-     {:plug, "~> 1.0 or ~> 1.1 or ~> 1.2 or ~> 1.3"},
-     {:poison, "~> 2.0 or ~> 3.0"},
+    [{:ecto, ">= 2.1.0 or < 2.3.0"},
+     {:plug, ">= 1.0.0 and < 1.8.0"},
+     {:jason, "~> 1.1"},
      {:postgrex, ">= 0.11.1", optional: true},
 
      # Dev and test dependencies
-     {:credo, "~> 0.9", only: [:dev, :test]},
-     {:ex_doc, "~> 0.18", only: :dev, runtime: false}]
+     {:credo, "~> 0.10", only: [:dev, :test]},
+     {:ex_doc, ">= 0.0.0", only: :dev}]
   end
 
   defp package do

@@ -3,6 +3,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
+  alias Plug.Conn.Utils
   alias ExOauth2Provider.Plug.ErrorHandler
 
   setup do
@@ -15,7 +16,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
     {status, headers, body} = conn
                               |> ErrorHandler.unauthenticated(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 401
     assert content_type(headers) == "text/plain"
@@ -27,21 +28,21 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
     {status, headers, body} = conn
                               |> ErrorHandler.unauthenticated(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 401
     assert content_type(headers) == "application/json"
-    assert body ==  Poison.encode!(%{errors: ["Unauthenticated"]})
+    assert body == Jason.encode!(%{errors: ["Unauthenticated"]})
   end
 
   test "unauthenticated/2 when no accept header", %{conn: conn} do
     {status, headers, body} = conn
                               |> ErrorHandler.unauthenticated(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 401
     assert content_type(headers) == "text/plain"
-    assert body ==  "Unauthenticated"
+    assert body == "Unauthenticated"
   end
 
   test "unauthorized/2 sends a 403 response when text/html", %{conn: conn} do
@@ -49,7 +50,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
     {status, headers, body} = conn
                               |> ErrorHandler.unauthorized(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 403
     assert content_type(headers) == "text/plain"
@@ -61,17 +62,17 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
     {status, headers, body} = conn
                               |> ErrorHandler.unauthorized(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 403
     assert content_type(headers) == "application/json"
-    assert body ==  Poison.encode!(%{errors: ["Unauthorized"]})
+    assert body == Jason.encode!(%{errors: ["Unauthorized"]})
   end
 
   test "unauthorized/2 sends 403 resp when no accept header", %{conn: conn} do
     {status, headers, body} = conn
                               |> ErrorHandler.unauthorized(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 403
     assert content_type(headers) == "text/plain"
@@ -79,14 +80,14 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
   end
 
   test "already_authenticated/2 halt the conn", %{conn: conn} do
-    conn = conn |> ErrorHandler.already_authenticated(%{})
+    conn = ErrorHandler.already_authenticated(conn, %{})
     assert conn.halted
   end
 
   defp content_type(headers) do
     {:ok, type, subtype, _params} = headers
                                     |> header_value("content-type")
-                                    |> Plug.Conn.Utils.content_type
+                                    |> Utils.content_type()
     "#{type}/#{subtype}"
   end
 
@@ -94,6 +95,6 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
     headers
     |> Enum.filter(fn({k, _}) -> k == key end)
     |> Enum.map(fn({_, v}) -> v end)
-    |> List.first
+    |> List.first()
   end
 end

@@ -18,10 +18,11 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   If the handler option is not passed, `ExOauth2Provider.Plug.ErrorHandler` will provide
   the default behavior.
   """
-  import Plug.Conn
+  alias Plug.Conn
+  alias ExOauth2Provider.Plug
 
   @doc false
-  @spec init(Keyword.t) :: Map.t
+  @spec init(Keyword.t) :: map()
   def init(opts) do
     opts = Enum.into(opts, %{})
     handler = build_handler_tuple(opts)
@@ -31,7 +32,7 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   end
 
   @doc false
-  @spec call(PlugConn.t, Map.t) :: Map.t
+  @spec call(Conn.t(), map()) :: map()
   def call(conn, opts) do
     key = Map.get(opts, :key, :default)
 
@@ -41,9 +42,9 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   end
 
   @doc false
-  @spec get_authentication(Plug.Conn.t, atom, Map.t) :: {Plug.Conn.t, {:ok, String.t} | {:error, term}}
+  @spec get_authentication(Conn.t(), atom(), map()) :: {Conn.t(), {:ok, binary()} | {:error, term()}}
   defp get_authentication(conn, key, opts),
-    do: {conn, ExOauth2Provider.Plug.get_current_access_token(conn, key), opts}
+    do: {conn, Plug.get_current_access_token(conn, key), opts}
 
   @doc false
   defp handle_authentication({conn, {:ok, _}, _}), do: conn
@@ -51,8 +52,10 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
     do: handle_error(conn, reason, opts)
 
   @doc false
-  defp handle_error(%Plug.Conn{params: params} = conn, reason, opts) do
-    conn = conn |> assign(:ex_oauth2_provider_failure, reason) |> halt
+  defp handle_error(%Conn{params: params} = conn, reason, opts) do
+    conn = conn
+           |> Conn.assign(:ex_oauth2_provider_failure, reason)
+           |> Conn.halt()
     params = Map.merge(params, %{reason: reason})
     {module, method} = Map.get(opts, :handler)
 

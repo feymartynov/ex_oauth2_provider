@@ -35,7 +35,7 @@ defmodule ExOauth2Provider do
   expire.
   """
 
-  alias ExOauth2Provider.OauthAccessTokens
+  alias ExOauth2Provider.{Config, OauthAccessTokens}
 
   @doc """
   Authenticate an access token.
@@ -46,15 +46,13 @@ defmodule ExOauth2Provider do
       {:ok, access_token}
       {:error, reason}
   """
-  @spec authenticate_token(String.t()) ::
-          {:ok, map}
-          | {:error, any}
+  @spec authenticate_token(binary()) :: {:ok, map()} | {:error, any()}
   def authenticate_token(nil), do: {:error, :token_inaccessible}
 
   def authenticate_token(token) do
     token
     |> load_access_token()
-    |> revoke_previous_refresh_token(ExOauth2Provider.Config.refresh_token_revoked_on_use?())
+    |> revoke_previous_refresh_token(Config.refresh_token_revoked_on_use?())
     |> validate_access_token()
     |> load_resource()
   end
@@ -80,9 +78,9 @@ defmodule ExOauth2Provider do
   defp load_resource({:ok, access_token}) do
     access_token = repo().preload(access_token, :resource_owner)
 
-    case access_token.resource_owner do
-      nil -> {:error, :no_association_found}
-      _ -> {:ok, access_token}
+    case is_nil(access_token.resource_owner_id) || not is_nil(access_token.resource_owner) do
+      true  -> {:ok, access_token}
+      false -> {:error, :no_association_found}
     end
   end
 

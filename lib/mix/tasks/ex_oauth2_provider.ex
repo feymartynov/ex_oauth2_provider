@@ -1,5 +1,6 @@
 defmodule Mix.Tasks.ExOauth2Provider do
   use Mix.Task
+  alias Mix.Tasks.Help
 
   @shortdoc "Prints ExOauth2Provider help information"
 
@@ -10,19 +11,18 @@ defmodule Mix.Tasks.ExOauth2Provider do
 
   @doc false
   def run(args) do
-    {_opts, args, _} = OptionParser.parse(args)
+    {_opts, args, _} = OptionParser.parse(args, switches: [])
 
-    args
-    |> validate_args
+    validate_args(args)
   end
   defp validate_args([]), do: general()
   defp validate_args(_), do: Mix.raise "Invalid arguments, expected: mix ex_oauth2_provider"
 
-  defp general() do
+  defp general do
     Application.ensure_all_started(:ex_oauth2_provider)
     Mix.shell.info "ExOauth2Provider v#{Application.spec(:ex_oauth2_provider, :vsn)}"
     Mix.shell.info Application.spec(:ex_oauth2_provider, :description)
     Mix.shell.info "\nAvailable tasks:\n"
-    Mix.Tasks.Help.run(["--search", "ex_oauth2_provider."])
+    Help.run(["--search", "ex_oauth2_provider."])
   end
 end

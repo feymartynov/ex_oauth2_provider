@@ -12,7 +12,7 @@ Add ExOauth2Provider to your list of dependencies in `mix.exs`:
 def deps do
   [
     # ...
-    {:ex_oauth2_provider, "~> 0.3"}
+    {:ex_oauth2_provider, "~> 0.4.3"}
     # ...
   ]
 end
@@ -86,6 +86,10 @@ end
 ```
 
 Revocation will return `{:ok, %{}}` status even if the token is invalid.
+
+### Authorization code flow in a Single Page Application
+
+ExOauth2Provider doesn't support **implicit** grant flow. Instead you should set up an application with no client secret, and use the **Authorize code** grant flow. `client_secret` isn't required unless it has been set for the application.
 
 ### Other supported token grants
 
@@ -305,6 +309,15 @@ mix ex_oauth2_provider.install --uuid all
 ### 3. If you need something different than `:uuid`
 
 It's also possible to use a completely different setup by adding a custom schema macro, however you'll need to ensure that the schema file is compiled before this library and that you've updated the migration file accordingly.
+
+### 4. If you need custom `belongs_to` options for resource owner
+
+You can provide a list of `belongs_to` options, by passing a keyword list instead. This is useful when you want to use a `references` value:
+
+```elixir
+config :ex_oauth2_provider, ExOauth2Provider,
+  resource_owner: {Dummy.User, [type: :binary_id, references: :uuid]}
+```
 
 ## Acknowledgement
 
