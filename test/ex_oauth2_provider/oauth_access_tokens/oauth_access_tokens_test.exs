@@ -66,7 +66,12 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "public")
     assert id == access_token2.id
 
-    QueryHelpers.change!(access_token1, inserted_at: NaiveDateTime.add(NaiveDateTime.utc_now(), 1, :second))
+    inserted_at =
+      NaiveDateTime.utc_now()
+      |> NaiveDateTime.add(1, :second)
+      |> NaiveDateTime.truncate(:second)
+
+    QueryHelpers.change!(access_token1, inserted_at: inserted_at)
 
     assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "public")
     assert id == access_token1.id
@@ -256,7 +261,11 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     {:ok, access_token} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
     assert access_token.id == access_token2.id
 
-    inserted_at = NaiveDateTime.add(NaiveDateTime.utc_now(), -access_token.expires_in, :second)
+    inserted_at =
+      NaiveDateTime.utc_now()
+      |> NaiveDateTime.add(-access_token.expires_in, :second)
+      |> NaiveDateTime.truncate(:second)
+
     QueryHelpers.change!(access_token2, inserted_at: inserted_at)
 
     {:ok, access_token} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})

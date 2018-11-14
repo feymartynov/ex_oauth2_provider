@@ -115,13 +115,17 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   end
 
   test "#grant/1 error when revoked grant", %{access_grant: access_grant} do
-    QueryHelpers.change!(access_grant, revoked_at: DateTime.utc_now())
+    QueryHelpers.change!(access_grant, revoked_at: NaiveDateTime.utc_now())
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}
   end
 
   test "#grant/1 error when grant expired", %{access_grant: access_grant} do
-    inserted_at = NaiveDateTime.add(NaiveDateTime.utc_now(), -access_grant.expires_in, :second)
+    inserted_at =
+      NaiveDateTime.utc_now()
+      |> NaiveDateTime.add(-access_grant.expires_in, :second)
+      |> NaiveDateTime.truncate(:second)
+
     QueryHelpers.change!(access_grant, inserted_at: inserted_at)
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}
