@@ -136,12 +136,15 @@ defmodule ExOauth2Provider.Authorization.ImplicitTest do
   } do
     Fixtures.access_token(resource_owner, %{
       application: application,
+      expires_in: 600,
       scopes: @valid_request["scope"]
     })
 
-    assert Authorization.preauthorize(resource_owner, @valid_request) ==
-             {:native_redirect,
-              %{access_token: QueryHelpers.get_latest_inserted(OauthAccessToken).token}}
+    assert {:native_redirect, response} = Authorization.preauthorize(resource_owner, @valid_request)
+
+    assert response[:access_token] == QueryHelpers.get_latest_inserted(OauthAccessToken).token
+    assert response[:expires_in] == 600
+    assert response[:scopes] == @valid_request["scope"]
   end
 
   test "#preauthorize/2 without prompting the resource owner", %{
@@ -250,7 +253,7 @@ defmodule ExOauth2Provider.Authorization.ImplicitTest do
 
     assert {:redirect, redirect_uri} = Authorization.authorize(resource_owner, params)
     token = QueryHelpers.get_latest_inserted(OauthAccessToken).token
-    assert redirect_uri == "https://example.com/path#access_token=#{token}&param=1&state=40612"
+    assert redirect_uri == "https://example.com/path#access_token=#{token}&expires_in=7200&scopes=app%3Aread+app%3Awrite&param=1&state=40612"
   end
 
   test "#deny/2 error when no resource owner" do

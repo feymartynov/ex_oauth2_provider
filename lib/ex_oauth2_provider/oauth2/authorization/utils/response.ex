@@ -4,11 +4,14 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   alias ExOauth2Provider.{RedirectURI, Scopes, Utils}
   alias Ecto.Schema
 
+  @type code_response :: %{code: binary()}
+  @type access_token_response :: %{access_token: binary(), expires_in: integer(), scopes: binary()}
+
   @doc false
   @spec error_response(map()) :: {:error, map(), integer()} |
                                  {:redirect, binary()} |
-                                 {:native_redirect, %{code: binary()}} |
-                                 {:native_redirect, %{access_token: binary()}}
+                                 {:native_redirect, code_response} |
+                                 {:native_redirect, access_token_response()}
   def error_response(%{error: error} = params),
     do: build_response(params, error)
 
@@ -16,10 +19,10 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   @spec preauthorize_response(map()) :: {:ok, Schema.t(), [binary()]} |
                                         {:error, map(), integer()} |
                                         {:redirect, binary()} |
-                                        {:native_redirect, %{code: binary()}} |
-                                        {:native_redirect, %{access_token: binary()}}
+                                        {:native_redirect, code_response} |
+                                        {:native_redirect, access_token_response}
   def preauthorize_response(%{grant: grant} = params), do: build_response(params, %{code: grant.token})
-  def preauthorize_response(%{access_token: access_token} = params), do: build_response(params, %{access_token: access_token.token})
+  def preauthorize_response(%{access_token: access_token} = params), do: build_response(params, access_token_response(access_token))
   def preauthorize_response(%{error: error} = params), do: build_response(params, error)
 
   def preauthorize_response(%{client: client, request: %{"scope" => scopes}}),
@@ -29,17 +32,17 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   @spec authorize_response(map()) :: {:ok, Schema.t(), [binary()]} |
                                      {:error, map(), integer()} |
                                      {:redirect, binary()} |
-                                     {:native_redirect, %{code: binary()}} |
-                                     {:native_redirect, %{access_token: binary()}}
+                                     {:native_redirect, code_response} |
+                                     {:native_redirect, access_token_response}
   def authorize_response(%{grant: grant} = params), do: build_response(params, %{code: grant.token})
-  def authorize_response(%{access_token: access_token} = params), do: build_response(params, %{access_token: access_token.token})
+  def authorize_response(%{access_token: access_token} = params), do: build_response(params, access_token_response(access_token))
   def authorize_response(%{error: error} = params), do: build_response(params, error)
 
   @doc false
   @spec deny_response(map()) :: {:error, map(), integer()} |
                                 {:redirect, binary()} |
-                                {:native_redirect, %{code: binary()}} |
-                                {:native_redirect, %{access_token: binary()}}
+                                {:native_redirect, code_response} |
+                                {:native_redirect, access_token_response}
   def deny_response(%{error: error} = params), do: build_response(params, error)
 
   defp build_response(%{request: request} = params, payload) do
@@ -49,6 +52,14 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
       true -> build_redirect_response(params, payload)
       _ -> build_standard_response(params, payload)
     end
+  end
+
+  defp access_token_response(access_token) do
+    %{
+      access_token: access_token.token,
+      expires_in: access_token.expires_in,
+      scopes: access_token.scopes
+    }
   end
 
   defp add_state(payload, request) do
